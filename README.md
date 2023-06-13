@@ -10,7 +10,7 @@ Ever thought of just asking your CSV file about its data? Matrix Mind, an innova
 It is an alternative and more human oriented way to interact with data by letting us engage in a conversational dialogue with our CSV files, extracting valuable insights as naturally as having a chat over coffee ☕.
 
 
-Why use the Cat:
+Why use it:
 - 🐋 100% [dockerized](https://docs.docker.com/get-docker/)
 - 👨‍💻 Chat with your CSV files
 
