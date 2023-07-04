@@ -39,8 +39,7 @@ export default {
     async submitApiKey() {
       try {
         const response = await axios.post('http://localhost:8000/api-key', {
-          apiKey: this.apiKey,
-          model: "" // to do
+          apiKey: this.apiKey
         })
         console.log(response.data)
         this.showError = false

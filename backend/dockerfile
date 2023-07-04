@@ -3,6 +3,7 @@ FROM python:3.9-slim-buster
 WORKDIR /app
 
 COPY ./requirements.txt ./requirements.txt
+COPY ./test.csv ./test.csv
 RUN pip3 install -r requirements.txt
 
 COPY . .

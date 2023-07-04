@@ -11,12 +11,14 @@ import os
 from langchain.llms import OpenAI
 from langchain.chat_models import ChatOpenAI
 from langchain.agents import create_csv_agent
+from langchain.agents.agent_types import AgentType
 
 #initialization
 app = FastAPI()
 credentials = False
 path_df = None
 csv_agent = None
+llm = None 
 
 
 ## add CORS middleware
@@ -30,27 +32,51 @@ app.add_middleware(
 
 class Item_api(BaseModel):
     apiKey: str
-    model: str
 
 class Item_msg(BaseModel):
     msg: str
 
 @app.post("/api-key")
 def process_api_key(item: Item_api):
+    """
+    Processes the API key and model with LangChain.
+
+    Args:
+        item (Item_api): The API key and model to process.
+
+    Returns:
+        dict: A message indicating that the API key and model have been processed.
+    """
     # try to process the api key and model with langchain
     try:
         os.environ["OPENAI_API_KEY"] = item.apiKey
-        llm = OpenAI(temperature = 0.1)
-        text = "What would be a good company name for a company that makes colorful socks?"
-        print(llm(text))
+        #global csv_agent
+        global llm 
+        #csv_agent = create_csv_agent(ChatOpenAI(temperature=0, model_name = "gpt-4"), path_df, verbose= True)
+        llm = ChatOpenAI(temperature=0, model_name = "gpt-4")
         global credentials
         credentials = True
-    except: 
-        raise HTTPException(status_code=400, detail="Invalid API Key or model. Please try again.")
-    return {"message": "API Key and model processed"}
 
+        return {"message": "API Key and model processed"}
+    
+    except ValueError as e:
+        print("An error occurred: ", e)
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        print("An error occurred: ", e)
+        raise HTTPException(status_code=500, detail="Internal server error.")
+    
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...)):
+    """
+    Uploads a CSV file and saves it to the server.
+
+    Args:
+        file (UploadFile, optional): The CSV file to upload. Defaults to File(...).
+
+    Returns:
+        dict: A message indicating that the file has been uploaded.
+    """
     if  credentials == False:
         raise HTTPException(status_code=400, detail="Please process your API Key and model first.")
 
@@ -67,34 +93,60 @@ async def upload_file(file: UploadFile = File(...)):
         return {"filename": file.filename}
     else:
         raise HTTPException(status_code=400, detail="Invalid file format. Only CSV files are accepted.")
-    
+
 @app.get("/first_generate")
 def first_generate():
-    while True:
-        try:
-            global path_df
-            global csv_agent
-            csv_agent = create_csv_agent(
-                ChatOpenAI(temperature=0),
-                path_df
-            )
-            user_msg = "Try to describe what is this CSV file about starting from the name of the columns."
-            msg = csv_agent.run(user_msg)
-            print("USER: " + user_msg)
-            print("AI: " + msg)
-            return {"message": msg}
-        except Exception as e:
-            print("An exception occurred: ", e)
+    """
+    Generates a response to a user message based on the uploaded CSV file.
 
+    Returns:
+        dict: A message containing the AI-generated response.
+    """
+    try:
+        global path_df
+        global csv_agent
+        global llm
+        if path_df is None:
+            raise ValueError("CSV file not uploaded. Please upload a CSV file first.")
+        user_msg = "Try to describe what is this CSV file about starting from the name of the columns."
+        csv_agent = create_csv_agent(llm, path_df, verbose= True)
+        msg = csv_agent.run(user_msg)
+        print("USER: " + user_msg)
+        print("AI: " + msg)
+        return {"message": msg}
+    
+    except ValueError as e:
+        print("An error occurred: ", e)
+        return JSONResponse(status_code=400, content={"message": str(e)})
+    
+    except Exception as e:
+        print("An error occurred: ", e)
+        return JSONResponse(status_code=500, content={"message": "Internal server error."})
+    
 @app.post("/generate")
 def generate(item_msg: Item_msg):
-    while True:
-        try:
-            global csv_agent
-            msg = csv_agent.run(item_msg.msg)
-            print("USER: " + item_msg.msg)
-            print("AI: " + msg)
-            return {"message": msg}
-                
-        except Exception as e:
-            print("An exception occurred: ", e)
+    """
+    Generates a response to a user message based on the uploaded CSV file.
+
+    Args:
+        item_msg (Item_msg): The user message to generate a response to.
+
+    Returns:
+        dict: A message containing the AI-generated response.
+    """
+    try:
+        global csv_agent
+        if csv_agent is None:
+            raise ValueError("CSV agent not initialized. Please run /first_generate first.")
+        msg = csv_agent.run(item_msg.msg)
+        print("USER: " + item_msg.msg)
+        print("AI: " + msg)
+        return {"message": msg}
+    
+    except ValueError as e:
+        print("An error occurred: ", e)
+        return JSONResponse(status_code=400, content={"message": str(e)})
+    
+    except Exception as e:
+        print("An error occurred: ", e)
+        return JSONResponse(status_code=500, content={"message": "Internal server error."})

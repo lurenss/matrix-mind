@@ -15,7 +15,7 @@
             <div v-if="loading" class="loading-icon">Loading...</div>
         </div>
         <div class="chat-footer">
-            <form class="message-form" @submit.prevent="sendMessage('user')">
+            <form class="message-form" @submit.prevent="sendMessage('user'); newMessage = ''">
                 <div class="message-input-container">
                     <input type="text" v-model="newMessage" placeholder="Type your message here" />
                     <button type="submit" class="send-button" style="margin-left: 30px"></button>
@@ -167,6 +167,8 @@ export default {
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
     max-width: 70%;
     word-wrap: break-word;
+    text-align: left; /* added this line */
+
 }
 
 .message-timestamp {
