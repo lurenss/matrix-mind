@@ -53,7 +53,7 @@ def process_api_key(item: Item_api):
         #global csv_agent
         global llm 
         #csv_agent = create_csv_agent(ChatOpenAI(temperature=0, model_name = "gpt-4"), path_df, verbose= True)
-        llm = ChatOpenAI(temperature=0, model_name = "gpt-4")
+        llm = ChatOpenAI(temperature=0, model_name = "gpt-4-0613")
         global credentials
         credentials = True
 
@@ -108,8 +108,8 @@ def first_generate():
         global llm
         if path_df is None:
             raise ValueError("CSV file not uploaded. Please upload a CSV file first.")
-        user_msg = "Try to describe what is this CSV file about starting from the name of the columns."
-        csv_agent = create_csv_agent(llm, path_df, verbose= True)
+        user_msg = "What are the columns of this dataset? Answer with a sentence please."
+        csv_agent = create_csv_agent(llm, path_df, verbose= True, agent_type= AgentType.OPENAI_FUNCTIONS)
         msg = csv_agent.run(user_msg)
         print("USER: " + user_msg)
         print("AI: " + msg)
